@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arvekalkulator</title>
+<style>
+  :root{
+    --bg:#F6F3EC; --card:#fff; --ink:#14261f; --muted:#8a8371; --sub:#5f5a4e;
+    --green:#0B6E5B; --green-dk:#14261f; --gold:#C9A24B; --line:#e7e1d4; --line2:#efe9dc;
+    --field:#fcfbf7; --fieldbd:#ddd6c7; --toggle:#f0ece1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Inter',-apple-system,system-ui,Segoe UI,Roboto,sans-serif;
+    background:var(--bg);color:#2b2b2b;padding:32px 16px;line-height:1.4}
+  .wrap{max-width:940px;margin:0 auto}
+  .eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:11px;font-weight:600;color:var(--green);margin-bottom:8px}
+  h1{font-size:40px;font-weight:700;margin:0 0 8px;letter-spacing:-.02em;color:var(--ink)}
+  .sub{font-size:15px;line-height:1.5;color:var(--sub);max-width:660px;margin:0 0 24px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border-radius:16px;padding:24px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(20,38,31,.04)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 18px;font-weight:600}
+  label.fld{display:block;font-size:13px;font-weight:600;color:#4a4638;margin-bottom:6px}
+  .divider{height:1px;background:var(--line2);margin:22px 0 20px}
+  .toggle{display:flex;gap:8px;margin-bottom:12px;background:var(--toggle);padding:4px;border-radius:10px}
+  .tbtn{flex:1;padding:9px 0;border:none;background:transparent;border-radius:7px;font-size:14px;font-weight:600;color:#7a7360;cursor:pointer;transition:all .15s}
+  .tbtn.sm{font-size:12.5px;padding:8px 0}
+  .tbtn.active{background:var(--green);color:#fff;box-shadow:0 1px 4px rgba(11,110,91,.3)}
+  .inwrap{position:relative;display:flex;align-items:center;margin-bottom:14px}
+  .inwrap input{width:100%;padding:11px 40px 11px 12px;font-size:16px;border:1px solid var(--fieldbd);border-radius:9px;background:var(--field);color:var(--ink);font-weight:600;outline:none}
+  .inwrap input:focus{border-color:var(--green)}
+  .kr{position:absolute;right:14px;font-size:13px;color:#a49c88;font-weight:500;pointer-events:none}
+  .check{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:#4a4638;margin:4px 0 16px;line-height:1.4;cursor:pointer}
+  .check input{margin-top:2px;accent-color:var(--green);width:16px;height:16px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .hint{font-size:12px;color:#9a927f;margin:8px 0 16px;line-height:1.4}
+  .stepper{display:flex;align-items:center;border:1px solid var(--fieldbd);border-radius:9px;overflow:hidden;background:var(--field)}
+  .stepper button{width:40px;height:42px;border:none;background:var(--toggle);font-size:20px;color:var(--green);cursor:pointer;font-weight:600}
+  .stepper .val{flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--ink)}
+  details.adv{margin-top:6px;border:1px solid var(--line2);border-radius:10px;padding:0}
+  details.adv summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--green);padding:12px 14px;list-style:none}
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary::before{content:'▸ ';font-size:11px}
+  details.adv[open] summary::before{content:'▾ '}
+  details.adv .body{padding:2px 14px 8px}
+  .summaryGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+  .stat{background:#f7f5ee;border-radius:10px;padding:12px 14px}
+  .stat .l{font-size:12px;color:#7a7360;margin-bottom:4px;font-weight:500}
+  .stat .v{font-size:16px;font-weight:700;color:var(--ink)}
+  .stat.strong .v{color:var(--green);font-size:22px}
+  .splitNote{font-size:13px;line-height:1.5;background:#eef5f2;color:#1a4c40;padding:11px 14px;border-radius:9px;margin-bottom:18px}
+  .barLabelRow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .barTitle{font-size:13px;font-weight:600;color:#4a4638}
+  .barTotal{font-size:13px;font-weight:700;color:var(--ink)}
+  .barTrack{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--toggle);gap:2px}
+  .barSeg{height:100%;transition:width .35s ease}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}
+  .legend span{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sub);font-weight:500}
+  .dot{width:10px;height:10px;border-radius:3px}
+  .lines{margin-top:22px;display:flex;flex-direction:column;gap:2px}
+  .lineItem{padding:12px 0;border-top:1px solid var(--line2)}
+  .lineTop{display:flex;justify-content:space-between;align-items:baseline}
+  .lineLabel{font-size:14px;font-weight:600;color:var(--ink)}
+  .lineVal{font-size:16px;font-weight:700;color:var(--green)}
+  .lineNote{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+  .flag{margin-top:18px;font-size:13px;line-height:1.5;padding:12px 14px;border-radius:9px}
+  .flag.ok{background:#eef5f2;color:#1a4c40}
+  .flag.warn{background:#fbf1e4;color:#8a5a1e}
+  .needBox{margin-top:22px;background:var(--green-dk);border-radius:12px;padding:18px 18px 16px}
+  .needTitle{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#8fb8ac;font-weight:600;margin-bottom:12px}
+  .needCalc{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+  .needRow{display:flex;justify-content:space-between;align-items:baseline}
+  .needRow .l{font-size:13.5px;color:#d9e4e0;display:flex;align-items:baseline;gap:7px}
+  .needRow .sign{display:inline-block;width:12px;color:#6fd0b6;font-weight:700;font-size:15px}
+  .needRow .sign.neg{color:#e0a878}
+  .needRow .v{font-size:14px;color:#f0f4f2;font-weight:600;font-variant-numeric:tabular-nums}
+  .needResult{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #2c4238;padding-top:13px;margin-top:2px}
+  .needResult span:first-child{color:#d9e4e0;font-size:14px;font-weight:600}
+  .needAmount{font-size:26px;font-weight:700;color:#6fd0b6;letter-spacing:-.01em}
+  .needCovered{font-size:12.5px;color:#8fb8ac;margin-top:8px;line-height:1.4}
+  .footer{margin-top:22px;font-size:12px;line-height:1.5;color:#9a927f;text-align:center;max-width:760px;margin-left:auto;margin-right:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Arveoppgjør · lovbestemt fordeling</div>
+  <h1>Arvekalkulator</h1>
+  <p class="sub">Oversikt over nettoformue, hvordan arven fordeles etter arveloven, og et anslag for behovet for privat dødsfallsdekning. Beløp er knyttet til folketrygdens grunnbeløp (1&nbsp;G&nbsp;=&nbsp;<span id="gval"></span>).</p>
+
+  <div class="grid">
+    <!-- INNDATA -->
+    <section class="card">
+      <h2>Inndata</h2>
+
+      <label class="fld">Sivilstatus</label>
+      <div class="toggle" id="statusToggle">
+        <button class="tbtn active" data-v="ektefelle">Ektefelle</button>
+        <button class="tbtn" data-v="samboer">Samboer</button>
+      </div>
+
+      <label class="fld">Samlede eiendeler (brutto)</label>
+      <div class="inwrap"><input id="eiendeler" inputmode="numeric" /><span class="kr">kr</span></div>
+
+      <label class="fld">Samlet gjeld</label>
+      <div class="inwrap"><input id="gjeld" inputmode="numeric" /><span class="kr">kr</span></div>
+
+      <label class="check" id="felleseieWrap">
+        <input type="checkbox" id="felleseie" checked />
+        <span>Felleseie – del boet likt før arv (avdødes andel = halvparten)</span>
+      </label>
+
+      <div class="row2">
+        <div>
+          <label class="fld">Felles barn</label>
+          <div class="stepper"><button data-step="fellesBarn" data-d="-1">−</button><span class="val" id="fellesBarnVal">2</span><button data-step="fellesBarn" data-d="1">+</button></div>
+        </div>
+        <div>
+          <label class="fld">Særkullsbarn</label>
+          <div class="stepper"><button data-step="saerkullsbarn" data-d="-1">−</button><span class="val" id="saerkullsbarnVal">0</span><button data-step="saerkullsbarn" data-d="1">+</button></div>
+        </div>
+      </div>
+      <p class="hint">Særkullsbarn = avdødes barn fra tidligere forhold.</p>
+
+      <details class="adv" id="advBo">
+        <summary>Avansert: skjevdeling og særeie</summary>
+        <div class="body">
+          <p class="hint" style="margin-top:8px">Skjevdeling holdes utenfor likedelingen; særeie går rett inn i avdødes bo. Brukes ved ektefelle med felleseie.</p>
+          <label class="fld">Skjevdeling (avdødes særlige verdier)</label>
+          <div class="inwrap"><input id="skjevdeling" inputmode="numeric" /><span class="kr">kr</span></div>
+          <label class="fld">Særeie (avdødes)</label>
+          <div class="inwrap"><input id="saereie" inputmode="numeric" /><span class="kr">kr</span></div>
+        </div>
+      </details>
+
+      <div class="divider"></div>
+      <h2>Forsikringsbehov</h2>
+
+      <label class="fld">Skal gjenlevende sitte i uskiftet bo?</label>
+      <div class="toggle" id="uskifteToggle">
+        <button class="tbtn sm active" data-v="ja">Ja – uskifte</button>
+        <button class="tbtn sm" data-v="nei">Nei – arven gjøres opp</button>
+      </div>
+      <p class="hint" id="uskifteHint"></p>
+
+      <label class="fld">Ansatt i offentlig sektor?</label>
+      <div class="toggle" id="offentligToggle">
+        <button class="tbtn sm active" data-v="nei">Nei / privat</button>
+        <button class="tbtn sm" data-v="stat">Statlig</button>
+        <button class="tbtn sm" data-v="kommune">Kommunal</button>
+      </div>
+      <p class="hint" id="offentligHint" style="display:none"></p>
+
+      <label class="fld">Dekning via arbeidsgiver</label>
+      <div class="inwrap"><input id="dekAg" inputmode="numeric" /><span class="kr">kr</span></div>
+
+      <label class="fld">Dekning via fagforening / forbund</label>
+      <div class="inwrap"><input id="dekForbund" inputmode="numeric" /><span class="kr">kr</span></div>
+
+      <details class="adv" id="advForsikring">
+        <summary>Avansert: forsørgerbehov</summary>
+        <div class="body">
+          <p class="hint" style="margin-top:8px">Tar med tapt inntekt til gjenlevende fram til yngste barn er selvforsørget. Gir et mer realistisk behov enn gjeld alene.</p>
+          <label class="fld">Netto årsinntekt som faller bort</label>
+          <div class="inwrap"><input id="tapInntekt" inputmode="numeric" /><span class="kr">kr</span></div>
+          <label class="fld">Antall år fram til yngste barn er selvforsørget</label>
+          <div class="stepper"><button data-step="aar" data-d="-1">−</button><span class="val" id="aarVal">0</span><button data-step="aar" data-d="1">+</button></div>
+        </div>
+      </details>
+    </section>
+
+    <!-- RESULTAT -->
+    <section class="card">
+      <h2>Resultat</h2>
+      <div class="summaryGrid">
+        <div class="stat"><div class="l">Eiendeler</div><div class="v" id="rEiendeler"></div></div>
+        <div class="stat"><div class="l">− Gjeld</div><div class="v" id="rGjeld"></div></div>
+        <div class="stat strong"><div class="l">= Nettoformue</div><div class="v" id="rNetto"></div></div>
+      </div>
+
+      <div class="splitNote" id="splitNote" style="display:none"></div>
+
+      <div class="barLabelRow"><span class="barTitle">Fordeling av dødsboet</span><span class="barTotal" id="rDodsbo"></span></div>
+      <div class="barTrack" id="barTrack"></div>
+      <div class="legend" id="legend"></div>
+
+      <div class="lines" id="lines"></div>
+
+      <div class="flag" id="uskifteFlag" style="display:none"></div>
+
+      <div class="needBox">
+        <div class="needTitle">Behov for privat dødsfallsdekning</div>
+        <div class="needCalc" id="needCalc"></div>
+        <div class="needResult"><span>Anslått behov</span><span class="needAmount" id="needAmount"></span></div>
+        <div class="needCovered" id="needCovered" style="display:none">Eksisterende dekninger dekker allerede behovet.</div>
+      </div>
+    </section>
+  </div>
+
+  <p class="footer">Forenklet illustrasjon til rådgivnings- og informasjonsbruk – ikke juridisk eller forsikringsfaglig rådgivning. Pliktdelen er begrenset til 15&nbsp;G per barn. Behovsmodellen avhenger av om gjenlevende sitter i uskiftet bo: ved uskifte dekkes gjeld og eventuelt forsørgertap, mens barnas arv kommer i tillegg når arven faktisk gjøres opp. Offentlige gruppelivssatser er anslag og kan avvike i den enkelte tariffavtale. G-sats per 1.&nbsp;mai&nbsp;2026.</p>
+</div>
+
+<script>
+(function(){
+  var G = 136549;
+  var OFF = { stat:14, kommune:10 };
+
+  var state = {
+    status:'ektefelle', eiendeler:4000000, gjeld:1500000, felleseie:true,
+    fellesBarn:2, saerkullsbarn:0, skjevdeling:0, saereie:0,
+    offentlig:'nei', dekAg:0, agManueltRort:false, dekForbund:0,
+    tapInntekt:0, aar:0, uskifte:'ja', uskifteRort:false
+  };
+
+  var fmt = new Intl.NumberFormat('nb-NO');
+  function nok(n){ return new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(Math.round(n)); }
+  function parseNum(v){ var n=Number(String(v).replace(/\s/g,'').replace(',','.')); return (isNaN(n)||n<0)?0:n; }
+
+  document.getElementById('gval').textContent = nok(G);
+
+  // init inputs
+  function setInput(id,val){ document.getElementById(id).value = val===0?'':fmt.format(val); }
+  setInput('eiendeler',state.eiendeler);
+  setInput('gjeld',state.gjeld);
+
+  function compute(){
+    var s=state;
+    var netto=Math.max(0,s.eiendeler-s.gjeld);
+    var totalBarn=s.fellesBarn+s.saerkullsbarn;
+    var harBarn=totalBarn>0;
+    var deles = s.status==='ektefelle' && s.felleseie;
+
+    var dodsbo;
+    if(deles){
+      // Trekk ut skjevdeling+særeie før likedeling, legg så tilbake i avdødes bo
+      var saerskilt = s.skjevdeling + s.saereie;
+      var tilDeling = Math.max(0, netto - saerskilt);
+      dodsbo = tilDeling/2 + saerskilt;
+    } else {
+      dodsbo = netto;
+    }
+    var gjenAndel = deles ? Math.max(0, netto - dodsbo) : 0;
+
+    var partnerArv=0, note='', minste=0;
+    if(s.status==='ektefelle'){
+      if(harBarn){ minste=4*G; var kv=dodsbo/4; partnerArv=Math.min(dodsbo,Math.max(kv,minste));
+        note = kv>=minste ? '1/4 av dødsboet (over minstearven på 4 G).' : 'Minstearven på 4 G (mer enn 1/4 av boet).';
+      } else { minste=6*G; var h=dodsbo/2; partnerArv=Math.min(dodsbo,Math.max(h,minste));
+        note='Ingen livsarvinger: 1/2 av boet, minst 6 G. (Uten foreldre/søsken arver ektefellen alt.)';
+      }
+    } else {
+      if(s.fellesBarn>0){ minste=4*G; partnerArv=Math.min(dodsbo,minste); note='Samboer med felles barn: rett til 4 G. Går foran barnas arv.'; }
+      else { partnerArv=0; note='Samboer uten felles barn har ingen lovbestemt arv – krever testament.'; }
+    }
+
+    // Barnas del, med pliktdelstak 15 G per barn
+    var restEtterPartner=Math.max(0,dodsbo-partnerArv);
+    var tilBarn=restEtterPartner, takAktivt=false, friMidler=0;
+    if(totalBarn>0){
+      var tak=15*G*totalBarn;
+      if(restEtterPartner>tak){ tilBarn=tak; friMidler=restEtterPartner-tak; takAktivt=true; }
+    }
+    var perBarn = totalBarn>0 ? tilBarn/totalBarn : 0;
+    // Frie midler (over pliktdelstaket) tilfaller boet – forenklet lagt til ektefelle/gjenlevende partner der det finnes,
+    // ellers vises som fri (testamentarisk disponibel).
+    var partnerTotal=partnerArv;
+    var friVises=friMidler;
+
+    var uskifteBlokkert=s.saerkullsbarn>0;
+
+    // Forsikringsbehov avhenger av scenario:
+    //  uskifte 'ja': barnas arv utbetales ikke nå -> behov = gjeld + forsørgertap − dekninger
+    //  uskifte 'nei': arven gjøres opp -> barnas arv må dekkes -> + barnas arv
+    var eksisterende=s.dekAg+s.dekForbund;
+    var forsorgerTap=s.tapInntekt*s.aar;
+    var barnasArvIBehov = s.uskifte==='nei' ? tilBarn : 0;
+    var brutto=s.gjeld+barnasArvIBehov+forsorgerTap;
+    var behov=Math.max(0,brutto-eksisterende);
+
+    return {netto,dodsbo,gjenAndel,deles,partnerArv,note,tilBarn,perBarn,totalBarn,harBarn,
+            takAktivt,friVises,uskifteBlokkert,eksisterende,forsorgerTap,barnasArvIBehov,brutto,behov};
+  }
+
+  function render(){
+    var b=compute(), s=state;
+
+    document.getElementById('rEiendeler').textContent=nok(s.eiendeler);
+    document.getElementById('rGjeld').textContent=nok(s.gjeld);
+    document.getElementById('rNetto').textContent=nok(b.netto);
+    document.getElementById('rDodsbo').textContent=nok(b.dodsbo);
+
+    var sn=document.getElementById('splitNote');
+    if(b.deles){ sn.style.display=''; sn.innerHTML='Ved felleseie beholder gjenlevende sin del: <strong>'+nok(b.gjenAndel)+'</strong>. Arven beregnes av dødsboet: <strong>'+nok(b.dodsbo)+'</strong>.'; }
+    else sn.style.display='none';
+
+    // bars
+    var segs=[];
+    if(b.partnerArv>0) segs.push({l:s.status==='ektefelle'?'Ektefelle':'Samboer',v:b.partnerArv,c:'#0B6E5B'});
+    if(b.tilBarn>0) segs.push({l:'Barn ('+b.totalBarn+')',v:b.tilBarn,c:'#C9A24B'});
+    if(b.friVises>0) segs.push({l:'Fri (testament)',v:b.friVises,c:'#9a927f'});
+    var sum=segs.reduce(function(a,x){return a+x.v},0)||1;
+    var track=document.getElementById('barTrack'); track.innerHTML='';
+    if(segs.length===0){ var d=document.createElement('div'); d.className='barSeg'; d.style.width='100%'; d.style.background='#e5e0d5'; track.appendChild(d); }
+    segs.forEach(function(seg,i){
+      var d=document.createElement('div'); d.className='barSeg';
+      d.style.width=(seg.v/sum*100)+'%'; d.style.background=seg.c; d.title=seg.l+': '+nok(seg.v);
+      if(i===0){d.style.borderTopLeftRadius='8px';d.style.borderBottomLeftRadius='8px';}
+      if(i===segs.length-1){d.style.borderTopRightRadius='8px';d.style.borderBottomRightRadius='8px';}
+      track.appendChild(d);
+    });
+    var leg=document.getElementById('legend'); leg.innerHTML='';
+    segs.forEach(function(seg){ var sp=document.createElement('span'); sp.innerHTML='<span class="dot" style="background:'+seg.c+'"></span>'+seg.l+' · '+nok(seg.v); leg.appendChild(sp); });
+
+    // lines
+    var lines=document.getElementById('lines'); lines.innerHTML='';
+    function addLine(label,val,note){
+      var w=document.createElement('div'); w.className='lineItem';
+      w.innerHTML='<div class="lineTop"><span class="lineLabel">'+label+'</span><span class="lineVal">'+nok(val)+'</span></div>'+(note?'<div class="lineNote">'+note+'</div>':'');
+      lines.appendChild(w);
+    }
+    addLine(s.status==='ektefelle'?'Til ektefelle':'Til samboer', b.partnerArv, b.note);
+    if(b.totalBarn>0){
+      var bn='Hvert barn: '+nok(b.perBarn);
+      if(b.takAktivt) bn+=' · Pliktdelstaket på 15 G per barn er nådd; overskytende er fritt (testament).';
+      addLine('Til barna ('+b.totalBarn+') – til sammen', b.tilBarn, bn);
+    }
+
+    // uskifte flag
+    var uf=document.getElementById('uskifteFlag');
+    if(s.status==='ektefelle'){
+      uf.style.display='';
+      if(b.uskifteBlokkert){ uf.className='flag warn'; uf.textContent='Særkullsbarn kan kreve sin arv straks og må samtykke for at gjenlevende skal kunne sitte i uskifte.'; }
+      else if(b.harBarn){ uf.className='flag ok'; uf.textContent='Kun felles barn: gjenlevende kan normalt velge uskiftet bo og utsette oppgjøret.'; }
+      else { uf.className='flag ok'; uf.textContent='Ingen barn: uskifte er ikke aktuelt.'; }
+    } else if(s.status==='samboer' && s.fellesBarn>0){
+      uf.style.display=''; uf.className='flag ok';
+      uf.textContent='Samboers uskifterett gjelder bestemte eiendeler (felles bolig, innbo, bil, fritidseiendom med tilbehør) og forutsetter felles barn.'+(b.uskifteBlokkert?' Særkullsbarn kan kreve sin arv straks.':'');
+    } else if(s.status==='samboer' && b.uskifteBlokkert){
+      uf.style.display=''; uf.className='flag warn';
+      uf.textContent='Samboer uten felles barn har ingen lovbestemt uskifterett; særkullsbarn kan kreve sin arv straks.';
+    } else uf.style.display='none';
+
+    // need calc
+    var nc=document.getElementById('needCalc'); nc.innerHTML='';
+    function needRow(label,val,sign,neg){
+      var r=document.createElement('div'); r.className='needRow';
+      r.innerHTML='<span class="l"><span class="sign'+(neg?' neg':'')+'">'+sign+'</span>'+label+'</span><span class="v">'+nok(val)+'</span>';
+      nc.appendChild(r);
+    }
+    needRow('Gjeld', s.gjeld, '');
+    if(b.barnasArvIBehov>0) needRow('Barnas arv (utbetales ved oppgjør)', b.barnasArvIBehov, '+');
+    if(b.forsorgerTap>0) needRow('Forsørgertap ('+s.aar+' år)', b.forsorgerTap, '+');
+    needRow('Dekninger (arbeidsgiver + forbund)', b.eksisterende, '−', true);
+    document.getElementById('needAmount').textContent=nok(b.behov);
+    document.getElementById('needCovered').style.display = b.behov===0 ? '' : 'none';
+  }
+
+  // ---- Bindings ----
+  function bindNum(id,key){
+    var el=document.getElementById(id);
+    el.addEventListener('input',function(){
+      state[key]=parseNum(el.value);
+      if(key==='dekAg') state.agManueltRort=true;
+      render();
+    });
+    el.addEventListener('blur',function(){ el.value = state[key]===0?'':fmt.format(state[key]); });
+  }
+  bindNum('eiendeler','eiendeler');
+  bindNum('gjeld','gjeld');
+  bindNum('skjevdeling','skjevdeling');
+  bindNum('saereie','saereie');
+  bindNum('dekAg','dekAg');
+  bindNum('dekForbund','dekForbund');
+  bindNum('tapInntekt','tapInntekt');
+
+  document.getElementById('statusToggle').addEventListener('click',function(e){
+    var btn=e.target.closest('button'); if(!btn)return;
+    state.status=btn.dataset.v;
+    this.querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x===btn)});
+    document.getElementById('felleseieWrap').style.display = state.status==='ektefelle'?'':'none';
+    document.getElementById('advBo').style.display = state.status==='ektefelle'?'':'none';
+    autoUskifte();
+    render();
+  });
+
+  document.getElementById('offentligToggle').addEventListener('click',function(e){
+    var btn=e.target.closest('button'); if(!btn)return;
+    state.offentlig=btn.dataset.v; state.agManueltRort=false;
+    this.querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x===btn)});
+    var hint=document.getElementById('offentligHint');
+    if(state.offentlig!=='nei'){
+      var anslag=OFF[state.offentlig]*G;
+      state.dekAg=anslag; setInput('dekAg',anslag);
+      hint.style.display=''; hint.textContent='Anslag fra tariff: '+OFF[state.offentlig]+' G til etterlatt partner ('+nok(anslag)+'). Overstyr feltet under om avtalen avviker.';
+    } else {
+      hint.style.display='none';
+    }
+    render();
+  });
+
+  // Auto-default for uskifte-scenario når brukeren ikke har valgt selv
+  function autoUskifte(){
+    if(state.uskifteRort) return;
+    var s=state;
+    // Full uskifte over hele boet er i praksis bare aktuelt for ektefelle med kun felles barn.
+    // Samboere har begrenset uskifterett (bestemte eiendeler), og særkullsbarn kan kreve arv straks.
+    if(s.status==='ektefelle' && s.saerkullsbarn===0 && s.fellesBarn>=0){
+      state.uskifte='ja';
+    } else {
+      state.uskifte='nei';
+    }
+    syncUskifteUI();
+  }
+  function syncUskifteUI(){
+    var wrap=document.getElementById('uskifteToggle');
+    wrap.querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x.dataset.v===state.uskifte)});
+    var hint=document.getElementById('uskifteHint');
+    if(state.uskifte==='ja'){
+      hint.textContent='Barnas arv utbetales ikke nå. Behovet dekker gjeld og eventuelt forsørgertap.';
+    } else {
+      hint.textContent='Arven gjøres opp; barnas arv må dekkes med likviditet for at gjenlevende skal beholde formuen (typisk ved særkullsbarn eller samboer uten uskifterett).';
+    }
+  }
+
+  document.getElementById('uskifteToggle').addEventListener('click',function(e){
+    var btn=e.target.closest('button'); if(!btn)return;
+    state.uskifte=btn.dataset.v; state.uskifteRort=true;
+    syncUskifteUI(); render();
+  });
+
+  document.querySelectorAll('[data-step]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var k=btn.dataset.step, d=parseInt(btn.dataset.d,10);
+      state[k]=Math.max(0,state[k]+d);
+      document.getElementById(k+'Val').textContent=state[k];
+      if(k==='fellesBarn'||k==='saerkullsbarn') autoUskifte();
+      render();
+    });
+  });
+
+  autoUskifte();
+  render();
+})();
+</script>
+</body>
+</html>
